@@ -8,7 +8,7 @@
 #include <stdbool.h>
 
 // Accessible Functions
-void new_hashtable();
+void ht_create();
 void ht_add(char *string);
 void ht_remove(char *string);
 bool ht_search(char *string);
