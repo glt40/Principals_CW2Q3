@@ -1,12 +1,12 @@
 #include "hashtable.h"
 
 // Initialise data structure
-typedef struct ht_hashtable {
+typedef struct {
    char **ht_record;
-};
+} ht_hashtable;
 
 // Initialise global variables
-struct ht_hashtable hashtable;
+ht_hashtable hashtable;
 int table_size = 1024;
 
 /*The following function finds the length of a string, given a pointer to the first char, returning an int
@@ -50,7 +50,7 @@ void ht_create() {
     for (int i = 0; i < table_size; i++) {
         hashtable.ht_record[i] = NULL;
     }
-    printf("Table created.");
+    printf("Table created.\n");
 }
 
 /* Function finds the next empty space in the hashtable starting from a given index
@@ -84,6 +84,7 @@ void ht_add(char *string) {
     }
     // adding string (array) to the table (array of arrays) at index i
     // Don't forget the null char
+    hashtable.ht_record[dest_index] = malloc(sizeof(char)*(str_len+1));
     for (int j = 0; j <= str_len; j++) {
         hashtable.ht_record[dest_index][j] = string[j];
     }
@@ -130,6 +131,8 @@ void ht_remove(char *string) {
         // error given
         printf("Error, string not found in table.\n");
     } else {
+        free(hashtable.ht_record[dest_index]);
+        hashtable.ht_record[dest_index] = malloc(sizeof(char)*(str_len+1));
         for (int i = 0; i < str_len; i++) {
             // char T stands for tombstone, and it allows the table to be searched after items have been removed
             hashtable.ht_record[dest_index][i] = 'T';
@@ -147,7 +150,7 @@ bool ht_search(char *string) {
         // String not found
         printf("\"%s\" not found.\n", string);
     } else {
-        printf("\"%s\" found at index %d, memory location %p.\n", string, dest_index, hashtable.ht_record[dest_index]);
+        printf("\"%s\" found at index %d, memory location %p.\n", string, dest_index, (void *)&hashtable.ht_record[dest_index]);
     }
 }
 

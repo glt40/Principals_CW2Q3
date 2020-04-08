@@ -20,7 +20,6 @@ int main() {
     // Search for strings after a removal
     ht_search("Will");
     ht_search("Gemma");
-    printf("complete");
     // Remove the table and release memory
 //    ht_destroy();
 //    // Operate if there is no existing hashtable
