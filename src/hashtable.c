@@ -80,7 +80,7 @@ int find_empty(int start) {
  */
 void ht_add(char *string) {
     if (!table_exists) {
-        printf("No table found. Aborting function.");
+        printf("No table found. Aborting function.\n");
         return;
     }
     int str_len = find_len(string);
@@ -98,7 +98,7 @@ void ht_add(char *string) {
     for (int j = 0; j <= str_len; j++) {
         hashtable.ht_record[dest_index][j] = string[j];
     }
-    printf( "String successfully added to table.\n");
+    printf( "String successfully added to table at index %d.\n", dest_index);
 }
 
 /* Function takes a char pointer to a string and returns the index at which that string is found
@@ -116,16 +116,30 @@ int ht_find_ind(char *string) {
     if (stop_index == table_size) {
         num_items = table_size;
     } else {
-        num_items = stop_index - dest_index;
+        if (stop_index > dest_index) {
+            num_items = stop_index - dest_index;
+        } else {
+            num_items = table_size - (dest_index - stop_index);
+        }
     }
     for (i = 0; i < num_items; i++) {
         if (hashtable.ht_record[(dest_index + i) % table_size][0] == string[0]) {
             full_match = true;
-            for (int j = 1; j < str_len; j++) {
+            for (int j = 1; j <= str_len; j++) {
+                if (hashtable.ht_record[(dest_index + i) % table_size][j] == '\0') {
+                    if (string[j] != '\0') {
+                        full_match = false;
+                    }
+                    break;
+                }
                 if (hashtable.ht_record[(dest_index + i) % table_size][j] != string[j]) {
                     full_match = false;
+                    break;
                 }
             }
+        }
+        if (full_match) {
+            break;
         }
     }
     return full_match ? (dest_index + i) % table_size : table_size;
@@ -136,7 +150,7 @@ int ht_find_ind(char *string) {
  */
 void ht_remove(char *string) {
     if (!table_exists) {
-        printf("No table found. Aborting function.");
+        printf("No table found. Aborting function.\n");
         return;
     }
     int str_len = find_len(string);
@@ -145,14 +159,10 @@ void ht_remove(char *string) {
         // error given
         printf("Error, string not found in table.\n");
     } else {
-//        // de and then re-allocate memory for this function to change it
-//        free(hashtable.ht_record[dest_index]);
-//        hashtable.ht_record[dest_index] = malloc(sizeof(char)*(str_len+1));
         for (int i = 0; i < str_len; i++) {
-            // char T stands for tombstone, and it allows the table to be searched after items have been removed
-            hashtable.ht_record[dest_index][i] = 'T';
+            // char ^ stands for a tombstone, and it allows the table to be searched after items have been removed
+            hashtable.ht_record[dest_index][i] = '^';
         }
-//        printf("%s %d\n", hashtable.ht_record[dest_index], dest_index);
         printf("String successfully removed.\n");
     }
 }
@@ -162,7 +172,7 @@ void ht_remove(char *string) {
  */
 bool ht_search(char *string) {
     if (!table_exists) {
-        printf("No table found. Aborting function.");
+        printf("No table found. Aborting function.\n");
         return false;
     }
     int dest_index = ht_find_ind(string);
@@ -184,21 +194,14 @@ void ht_destroy() {
         return;
     }
     // Memory needs to be released and the hashtable cleared
-    // First set everything to NULL type
-    for (int i = 0; i < table_size; ++i) {
-        int j = 0;
-//        free(hashtable.ht_record[i]);
-//        hashtable.ht_record[i] = malloc(sizeof(char));
-        do {
-            hashtable.ht_record[i][j] = (char) NULL;
-        } while (hashtable.ht_record[i][j] != (char) NULL);
-    }
     // Release the individual records
     for (int i = 0; i < table_size; i++) {
-        free(hashtable.ht_record[i]);
+        if (hashtable.ht_record[i] != NULL) {
+            free(hashtable.ht_record[i]);
+        }
     }
     // Release the table
-    free(&hashtable);
+    free(hashtable.ht_record);
     table_exists = false;
-    printf("Hashtable destroyed.");
+    printf("Hashtable destroyed.\n");
 }

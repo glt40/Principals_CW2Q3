@@ -6,10 +6,8 @@ int main() {
     ht_create();
     // Add some strings
     ht_add("Gemma");
-    ht_add("Fiona");
-    ht_add("Will");
-    ht_add("Justin");
-    ht_add("Maeva");
+    // Add LOADS of strings FIXME ===========================================================
+
     // Search for strings
     ht_search("Fiona");
     ht_search("Alfie");
@@ -28,8 +26,8 @@ int main() {
     // Removing a hashtable that doesn't exist won't work
     ht_destroy();
     // Operating if there is no existing hashtable won't work
-//    ht_add("Gemma");
-//    ht_search("Gemma");
-//    ht_remove("Gemma");
+    ht_add("Gemma");
+    ht_search("Gemma");
+    ht_remove("Gemma");
     return 0;
 }
