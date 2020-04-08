@@ -131,6 +131,7 @@ void ht_remove(char *string) {
         // error given
         printf("Error, string not found in table.\n");
     } else {
+        // de and then re-allocate memory for this function to change it
         free(hashtable.ht_record[dest_index]);
         hashtable.ht_record[dest_index] = malloc(sizeof(char)*(str_len+1));
         for (int i = 0; i < str_len; i++) {
@@ -157,5 +158,20 @@ bool ht_search(char *string) {
 /* This function frees allocated memory and clears the existing hashtable
  */
 void ht_destroy() {
-
+    // Memory needs to be released and the hashtable cleared
+    // First set everything to NULL type
+    for (int i = 0; i < table_size; ++i) {
+        int j = 0;
+        do {
+            hashtable.ht_record[i][j] = (char)NULL;
+            j++;
+        } while (hashtable.ht_record[i][j] != (char)NULL);
+    }
+    // Release the individual records
+    for (int i = 0; i < table_size; i++) {
+        free(hashtable.ht_record[i]);
+    }
+    // Release the table
+    free(&hashtable);
+    printf("Hashtable destroyed.");
 }
