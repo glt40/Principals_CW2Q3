@@ -7,14 +7,14 @@ typedef struct {
 
 // Initialise global variables
 ht_hashtable hashtable;
-int table_size = 1024;
+int table_size = 8192;
 bool table_exists = false;
 
 /*The following function finds the length of a string, given a pointer to the first char, returning an int
  */
 int find_len(const char *string) {
     int i=0;
-    while (string[i] != 0) {
+    while (string[i] != '\0') {
         i++;
     }
     return i;
@@ -42,16 +42,18 @@ __uint32_t joaat_hash(char *key) {
 
 /* This function initialises a new table by allocating a fixed amount of memory and clearing it to NULL
  * The pointer to the table is stored in a global variable
- * The table has space for 1024 strings, but it is recommended to store up to 75% of that, or 768 strings total
+ * The table has space for default 8192 strings, but it is recommended to store up to 75% of that
+ * NOTE THAT THE HASHTABLE IS CASE SENSITIVE
  */
 void ht_create() {
     if (table_exists) {
+        // Don't create a new table if there's one already there
         printf("Table already exists. Aborting function.\n");
         return;
     }
     // Allocate the memory
     hashtable.ht_record = (char **)malloc(sizeof(char *) * table_size);
-    // Set all records to null
+    // Set all records to null to allow for searching
     for (int i = 0; i < table_size; i++) {
         hashtable.ht_record[i] = NULL;
     }
@@ -59,23 +61,23 @@ void ht_create() {
     printf("Table created.\n");
 }
 
-/* Function finds the next empty space in the hashtable starting from a given index
- * Returns an index, or returns "1024" as an error if table is full
+/* This function finds the next empty space in the hashtable starting from a given index
+ * Returns an index, or returns the table size as an error if table is full, default 8192
  */
 int find_empty(int start) {
     // collision handling: if the index calculated contains something, find the next empty one
     for (int i = 0; i < table_size; i++) {
         if (hashtable.ht_record[(start + i) % table_size] == NULL) {
-            // This allows for wraparound in the array
+            // This mod expression allows for wraparound in the array
             return (i + start) % table_size;
         }
     }
-    // If no empty spaces are found return 1024
+    // If no empty spaces are found return error
     return table_size;
 }
 
 /* This function adds a string to the hashtable by hashing the string,
- * then using the modulo division by 1024 to generate an index
+ * then using the modulo division by table size to generate an index
  * Collision handling is done via Open addressing/ Linear probing
  */
 void ht_add(char *string) {
@@ -88,21 +90,22 @@ void ht_add(char *string) {
     // Find the next empty index with find_empty()
     dest_index = find_empty(dest_index);
     if (dest_index == table_size) {
-        // if there are no free spaces left, the string can't be added
-        printf("Error adding string. Table is full.\n");
+        // If there are no free spaces left, the string can't be added
+        printf("Error adding \"%s\". Table is full.\n", string);
         return;
     }
-    // adding string (array) to the table (array of arrays) at index i
-    // Don't forget the null char
+    // Adding string (array) to the table (array of arrays) at index i
+    // Memory needs to be allocated for the string, including the NULL char
     hashtable.ht_record[dest_index] = malloc(sizeof(char)*(str_len+1));
     for (int j = 0; j <= str_len; j++) {
+        // Copy each letter into the record
         hashtable.ht_record[dest_index][j] = string[j];
     }
-    printf( "String successfully added to table at index %d.\n", dest_index);
+    printf( "\"%s\" successfully added to table at index %d.\n", string, dest_index);
 }
 
-/* Function takes a char pointer to a string and returns the index at which that string is found
- * Returns "1024" as an error if table is full or if string isn't found
+/* This function takes a char pointer to a string and returns the index at which that string is found
+ * Returns table size as an error if table is full or if string isn't found
  */
 int ht_find_ind(char *string) {
     int str_len = find_len(string);
@@ -119,20 +122,24 @@ int ht_find_ind(char *string) {
         if (stop_index > dest_index) {
             num_items = stop_index - dest_index;
         } else {
+            // stop_index is before dest_index so check up to the end of the table and then from [0] to stop_index
             num_items = table_size - (dest_index - stop_index);
         }
     }
     for (i = 0; i < num_items; i++) {
         if (hashtable.ht_record[(dest_index + i) % table_size][0] == string[0]) {
+            // First char is matching
             full_match = true;
             for (int j = 1; j <= str_len; j++) {
                 if (hashtable.ht_record[(dest_index + i) % table_size][j] == '\0') {
+                    // Reached the end of the record, check for the end of the search string too
                     if (string[j] != '\0') {
                         full_match = false;
                     }
                     break;
                 }
                 if (hashtable.ht_record[(dest_index + i) % table_size][j] != string[j]) {
+                    // As soon as a non matching char is found, change boolean and break the loop
                     full_match = false;
                     break;
                 }
@@ -142,6 +149,8 @@ int ht_find_ind(char *string) {
             break;
         }
     }
+    // If a match is found, return its index in the table
+    // Otherwise, return an error
     return full_match ? (dest_index + i) % table_size : table_size;
 }
 
@@ -156,14 +165,14 @@ void ht_remove(char *string) {
     int str_len = find_len(string);
     int dest_index = ht_find_ind(string);
     if (dest_index == table_size) {
-        // error given
-        printf("Error, string not found in table.\n");
+        // Error given from ht_find_ind()
+        printf("Error, \"%s\" not found in table.\n", string);
     } else {
         for (int i = 0; i < str_len; i++) {
-            // char ^ stands for a tombstone, and it allows the table to be searched after items have been removed
+            // Char '^' stands for a tombstone, and it allows the table to be searched after items have been removed
             hashtable.ht_record[dest_index][i] = '^';
         }
-        printf("String successfully removed.\n");
+        printf("\"%s\" successfully removed from table.\n", string);
     }
 }
 
@@ -177,8 +186,8 @@ bool ht_search(char *string) {
     }
     int dest_index = ht_find_ind(string);
     if (dest_index == table_size) {
-        // String not found
-        printf("\"%s\" not found.\n", string);
+        // Error given from ht_find_ind()
+        printf("\"%s\" not found in table.\n", string);
         return false;
     } else {
         printf("\"%s\" found at index %d, memory location %p.\n", string, dest_index, (void *)&hashtable.ht_record[dest_index]);
@@ -189,6 +198,7 @@ bool ht_search(char *string) {
 /* This function frees allocated memory and clears the existing hashtable
  */
 void ht_destroy() {
+    // Don't destroy a table that doesn't exist
     if (!table_exists) {
         printf("No table found. Aborting function.\n");
         return;
