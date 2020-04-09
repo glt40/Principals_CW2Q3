@@ -1,5 +1,5 @@
 # cmake_minimum_required(VERSION <specify CMake version here>)
-project(C_stuff C)
+project(Code_C C)
 
 set(CMAKE_C_STANDARD 11)
 
