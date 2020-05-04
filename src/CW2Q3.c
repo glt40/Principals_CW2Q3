@@ -1,5 +1,5 @@
 #include <stdio.h>
-#import "hashtable.h"
+#include "hashtable.h"
 
 /* Adds around 5000 strings from a file containing given names
  * The file has names in UPPERCASE separated by spaces
